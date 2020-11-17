@@ -106,6 +106,7 @@
 | Ctrl + ↑ / ↓         | 줄 단위로 스크롤 올리기 / 내리기     |
 | Alt + PgUp / PgDn    | 페이지 단위로 스크롤 올리기 / 내리기 |
 | Ctrl + /             | 라인 주석 설정 / 해제                |
+| Ctrl + U             | 커서 동작 되돌리기                   |
 
 &nbsp;
 
@@ -234,7 +235,6 @@
 | Ctrl + Shift + Alt + arrow_key   | 열 범위 선택                          |
 | Shift + Alt + mouse_drag         | 열 범위 선택 (마우스 버전)            |
 | Shift + Alt + I                  | 선택 범위 끝에 커서 위치하기          |
-| Ctrl + U                         | 커서 동작 되돌리기                    |
 | Shift + Alt + → / ←              | 선택 범위 확장 / 축소                 |
 | Ctrl + F2                        | Ctrl + Shift + L과 차이를 느끼지 못함 |
 | Ctrl + K, S                      | 열려있는 모든 파일 저장               |
