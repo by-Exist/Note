@@ -5,7 +5,7 @@ from pydantic import BaseModel, Extra, UUID4, Field
 from uuid import uuid4
 
 
-class _BaseDomainModel(BaseModel):
+class BaseDomainModel(BaseModel):
     class Config:
         # Class
         orm_mode = True  # Model.from_orm 활성화
@@ -17,8 +17,8 @@ class _BaseDomainModel(BaseModel):
         return type(self) is type(other) and self.__dict__ == other.__dict__
 
 
-class ValueObject(_BaseDomainModel):
-    class Config(_BaseDomainModel.Config):
+class ValueObject(BaseDomainModel):
+    class Config(BaseDomainModel.Config):
         frozen = True  # 필드 값 변경 불가, __hash__ 메서드 제공
 
 
@@ -28,11 +28,11 @@ if typing.TYPE_CHECKING:
     ModelSchema = dict[str, typing.Any | PropertiesSchema]
 
 
-class Entity(_BaseDomainModel):
+class Entity(BaseDomainModel):
 
     id: UUID4 = Field(default_factory=uuid4, allow_mutation=False)
 
-    class Config(_BaseDomainModel.Config):
+    class Config(BaseDomainModel.Config):
         # Class
         validate_assignment = True  # 속성 할당 시 유효성 검사 수행
 
