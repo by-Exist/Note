@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./Language/Python/Projects/pydamain/src"
+    ]
+}
