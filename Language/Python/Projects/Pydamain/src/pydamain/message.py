@@ -1,5 +1,4 @@
 from __future__ import annotations
-from cgitb import handler
 
 from contextvars import ContextVar
 from datetime import datetime
