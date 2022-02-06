@@ -34,7 +34,7 @@ Message = TypeVar("Message", bound=Command | Event)
 Return = TypeVar("Return")
 
 
-class Handler(Generic[Message, Return]):
+class Handler(Generic[Message]):
     def __init__(
         self,
         func: Callable[Concatenate[Message, P], Return | Awaitable[Return]],
@@ -72,36 +72,39 @@ class MessageBus:
     def __init__(
         self,
         dependencies: dict[str, Any],
-        command_type_func_mapping: dict[type[Command], Callable[..., Any]],
-        event_type_funcs_mapping: dict[type[Event], list[Callable[..., Any]]],
     ):
-        self.dependencies = dependencies
-        self.command_type_handler_mapping = {
-            name: Handler(value, dependencies)
-            for name, value in command_type_func_mapping.items()
-        }
-        self.event_type_handlers_mapping = {
-            name: set(Handler(value, dependencies) for value in values)
-            for name, values in event_type_funcs_mapping.items()
-        }
+        self.command_handler_map: dict[type[Command], Handler[Command]] = {}
+        for command_sub_class in Command.command_sub_classes:
+            if command_sub_class.handler:
+                self.command_handler_map[command_sub_class] = Handler(
+                    command_sub_class.handler, dependencies
+                )
+        self.event_handlers_map: dict[type[Event], set[Handler[Event]]] = {}
+        for event_sub_class in Event.event_sub_classes:
+            if event_sub_class.handlers:
+                self.event_handlers_map[event_sub_class] = set(
+                    Handler(handler, dependencies)
+                    for handler in event_sub_class.handlers
+                )
 
     async def handle(self, m: Command | Event):
         if isinstance(m, Command):
-            events = await asyncio.create_task(self.handle_command(m))
+            result, events = await asyncio.create_task(self.handle_command(m))
         else:
-            events = await asyncio.create_task(self.handle_event(m))
+            result, events = await asyncio.create_task(self.handle_event(m))
         for event in events:
             asyncio.create_task(self.handle(event))
+        return result
 
     async def handle_command(self, command: Command):
         with EventContext() as event_catcher:
-            handler = self.command_type_handler_mapping[type(command)]
-            await handler(command)
-        return event_catcher.events
+            handler = self.command_handler_map[type(command)]
+            result = await handler(command)
+        return result, event_catcher.events
 
     async def handle_event(self, event: Event):
         with EventContext() as event_catcher:
-            handlers = self.event_type_handlers_mapping[type(event)]
+            handlers = self.event_handlers_map[type(event)]
             coros = [handler(event) for handler in handlers]
-            await asyncio.gather(*coros, return_exceptions=True)
-        return event_catcher.events
+            result = await asyncio.gather(*coros, return_exceptions=True)
+        return result, event_catcher.events
