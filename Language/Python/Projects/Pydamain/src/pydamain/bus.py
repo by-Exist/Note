@@ -34,7 +34,7 @@ Message = TypeVar("Message", bound=Command | Event)
 Return = TypeVar("Return")
 
 
-class Handler(Generic[Message]):
+class Handler(Generic[Message, Return]):
     def __init__(
         self,
         func: Callable[Concatenate[Message, P], Return | Awaitable[Return]],
