@@ -22,12 +22,6 @@ class ValueObject(BaseDomainModel):
         frozen = True  # 필드 값 변경 불가, __hash__ 메서드 제공
 
 
-if typing.TYPE_CHECKING:
-    PropertySchema = dict[str, typing.Any]
-    PropertiesSchema = dict[str, PropertySchema]
-    ModelSchema = dict[str, typing.Any | PropertiesSchema]
-
-
 class Entity(BaseDomainModel):
 
     id: UUID4 = Field(default_factory=uuid4, allow_mutation=False)
