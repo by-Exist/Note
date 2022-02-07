@@ -3,28 +3,25 @@ from __future__ import annotations
 from contextvars import ContextVar
 from datetime import datetime
 from uuid import uuid4, UUID
-from typing import Any, Callable, ClassVar
+from typing import (
+    Any,
+    Callable,
+    ClassVar,
+)
 from weakref import WeakSet
 
-from pydantic import BaseModel, Field, Extra
+from dataclasses import dataclass, field
 
 
-class BaseMessage(BaseModel):
-
-    id: UUID = Field(default_factory=uuid4)
-    create_time: datetime = Field(default_factory=datetime.now)
-
-    class Config:
-        # Class
-        frozen = True
-        # Initialization
-        extra = Extra.ignore
-        allow_population_by_field_name = True
+@dataclass(frozen=True, kw_only=True)
+class BaseMessage:
+    id: UUID = field(default_factory=uuid4)
+    create_time: datetime = field(default_factory=datetime.now)
 
 
+@dataclass(frozen=True, kw_only=True)
 class Command(BaseMessage):
-
-    handler: ClassVar[Callable[..., Any]] | None = None
+    handler: ClassVar[Callable[..., Any] | None] = None
     command_sub_classes: ClassVar[WeakSet[type[Command]]] = WeakSet()
 
     def __init_subclass__(cls) -> None:
@@ -32,11 +29,8 @@ class Command(BaseMessage):
         cls.command_sub_classes.add(cls)
 
 
-events_context_var: ContextVar[list[Event]] = ContextVar("events_context_var")
-
-
+@dataclass(frozen=True, kw_only=True)
 class Event(BaseMessage):
-
     handlers: ClassVar[list[Callable[..., Any]]] = []
     event_sub_classes: ClassVar[WeakSet[type[Event]]] = WeakSet()
 
@@ -45,8 +39,13 @@ class Event(BaseMessage):
         cls.event_sub_classes.add(cls)
 
     def issue(self):
-        event_list = events_context_var.get()
+        event_list = _events_context_var.get()
         event_list.append(self)
+
+
+_events_context_var: ContextVar[list[Event]] = ContextVar(
+    "_events_context_var"
+)
 
 
 class EventContext:
@@ -54,9 +53,9 @@ class EventContext:
         self.events: list[Event] = []
 
     def __enter__(self):
-        self.token = events_context_var.set(list())
+        self.token = _events_context_var.set(list())
         return self
 
     def __exit__(self, *args: tuple[Any]):
-        self.events.extend(events_context_var.get())
-        events_context_var.reset(self.token)
+        self.events.extend(_events_context_var.get())
+        _events_context_var.reset(self.token)
