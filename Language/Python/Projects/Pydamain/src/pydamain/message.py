@@ -10,16 +10,17 @@ from typing import (
 )
 from weakref import WeakSet
 
-from dataclasses import dataclass, field
+from pydantic import BaseModel, Field
 
 
-@dataclass(frozen=True, kw_only=True)
-class BaseMessage:
-    id: UUID = field(default_factory=uuid4)
-    create_time: datetime = field(default_factory=datetime.now)
+class BaseMessage(BaseModel):
+    id: UUID = Field(default_factory=uuid4)
+    create_time: datetime = Field(default_factory=datetime.now)
+
+    class Config:
+        frozen = True
 
 
-@dataclass(frozen=True, kw_only=True)
 class Command(BaseMessage):
     handler: ClassVar[Callable[..., Any] | None] = None
     command_sub_classes: ClassVar[WeakSet[type[Command]]] = WeakSet()
@@ -29,7 +30,6 @@ class Command(BaseMessage):
         cls.command_sub_classes.add(cls)
 
 
-@dataclass(frozen=True, kw_only=True)
 class Event(BaseMessage):
     handlers: ClassVar[list[Callable[..., Any]]] = []
     event_sub_classes: ClassVar[WeakSet[type[Event]]] = WeakSet()
