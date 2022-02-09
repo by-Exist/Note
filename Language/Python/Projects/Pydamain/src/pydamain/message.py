@@ -3,12 +3,7 @@ from __future__ import annotations
 from contextvars import ContextVar
 from datetime import datetime
 from uuid import uuid4, UUID
-from typing import (
-    Any,
-    Callable,
-    ClassVar,
-)
-from weakref import WeakSet
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -22,22 +17,10 @@ class BaseMessage(BaseModel):
 
 
 class Command(BaseMessage):
-    handler: ClassVar[Callable[..., Any] | None] = None
-    command_sub_classes: ClassVar[WeakSet[type[Command]]] = WeakSet()
-
-    def __init_subclass__(cls) -> None:
-        super().__init_subclass__()
-        cls.command_sub_classes.add(cls)
+    ...
 
 
 class Event(BaseMessage):
-    handlers: ClassVar[list[Callable[..., Any]]] = []
-    event_sub_classes: ClassVar[WeakSet[type[Event]]] = WeakSet()
-
-    def __init_subclass__(cls) -> None:
-        super().__init_subclass__()
-        cls.event_sub_classes.add(cls)
-
     def issue(self):
         event_list = _events_context_var.get()
         event_list.append(self)
